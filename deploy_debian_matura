@@ -1,0 +1,30 @@
+#!/bin/bash
+
+. ./functions.sh
+
+BASECOMP=deb10-test
+DEBIAN_VERSION="bullseye"
+INSTALL_APPS="codeblocks,g++,idle-python3.8,mariadb-server,xterm"
+UEFI=true
+
+configure_time
+fix_hostname
+set_block_devices
+
+restore_ptable || exit 1
+create_efi
+
+install_debian
+
+mount $DEVICE /mnt/hd
+
+chroot /mnt/hd useradd -m -s /bin/bash -p $(openssl passwd -1 matura) matura
+
+cp setup/config-mariadb-server-matura.sh /mnt/hd/usr/local/bin/
+echo @reboot\ root\ /usr/local/bin/config-mariadb-server-matura.sh\ \&\&\ rm\ /usr/local/bin/config-mariadb-server-matura.sh > /mnt/hd/etc/cron.d/config-mariadb-server-matura
+chmod a+x /mnt/hd/etc/cron.d/config-mariadb-server-matura
+
+curl -L https://download.jetbrains.com/python/pycharm-community-2020.1.1.tar.gz | tar zx -C /mnt/hd/opt/
+cp setup/jetbrains-pycharm-ce.desktop /mnt/hd/usr/share/applications/
+
+umount /mnt/hd

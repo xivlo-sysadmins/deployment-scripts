@@ -1,0 +1,100 @@
+#!/bin/bash
+
+. ./functions.sh
+
+BASECOMP=win10-test
+UEFI=true
+
+
+for param in $@; do
+  case $param in
+    --codeblocks)
+      INSTALL_APPS="$INSTALL_APPS codeblocks-mingw"
+    ;;
+    --eclipse)
+      INSTALL_APPS="$INSTALL_APPS adoptopenjdk-13-jdk eclipse-java"
+    ;;
+    --idle)
+      INSTALL_APPS="$INSTALL_APPS python3"
+    ;;
+    --pycharm)
+      INSTALL_PYCHARM=true
+      INSTALL_APPS="$INSTALL_APPS python3"
+    ;;
+    --visual)
+      INSTALL_VISUAL_STUDIO=true
+    ;;
+    --libreoffice)
+      INSTALL_APPS="$INSTALL_APPS libreoffice"
+    ;;
+    --full)
+      INSTALL_APPS="$INSTALL_APPS adoptopenjdk-13-jdk codeblocks-mingw eclipse-java libreoffice python3"
+      INSTALL_PYCHARM=true
+    ;;
+    --of13)
+      INSTALL_OFFICE_2013=true
+    ;;
+    --of16)
+      INSTALL_OFFICE_2016=true
+    ;;
+    --nospell)
+      INSTALL_APPS="$INSTALL_APPS libreoffice"
+      DELETE_LIBREOFFICE_DICTS=true
+    ;;
+    *)
+      echo unrecognized option $param
+      exit 1
+    ;;
+  esac
+done
+
+
+configure_time
+fix_hostname
+set_block_devices
+
+restore_ptable || exit 1
+create_efi
+
+install_windows
+
+win_reg_set_utc_time
+
+mount_win
+
+uninstall_windows_apps
+
+mkdir /mnt/hd/Windows/Panther/
+chmod 755 /mnt/hd/Windows/Panther/
+cp $IMAGEPATH/obrazy/windows_images/config/Unattend.xml /mnt/hd/Windows/Panther/Unattend.xml || { echo "Error coping Unattend.xml"; exit 1; }
+sed -i -e "s/HOSTNAME/$NEWHOSTNAME/" /mnt/hd/Windows/Panther/Unattend.xml
+
+SETUP_SCRIPTS="runonce config-time disable-autologon delete-runners config-local-admin add-matura-user"
+for SCRIPT in $SETUP_SCRIPTS; do
+  cp $IMAGEPATH/setup/$SCRIPT.bat /mnt/hd/$SCRIPT.bat || { echo "Error coping $SCRIPT.bat"; exit 1; }
+done
+
+if [ $INSTALL_PYCHARM = true ]; then
+  cp $IMAGEPATH/setup/install-pycharm.bat /mnt/hd/install-pycharm.bat || { echo "Error coping install-pycharm.bat"; exit 1; }
+fi
+
+if [ $INSTALL_VISUAL_STUDIO = true ]; then
+  cp $IMAGEPATH/setup/install-visual-studio-community-cpp.bat /mnt/hd/install-visual-studio-community-cpp.bat || { echo "Error coping install-visual-studio-community-cpp.bat"; exit 1; }
+fi
+
+if [ $INSTALL_OFFICE_2013 = true ]; then
+  cp $IMAGEPATH/setup/install-office2013.bat /mnt/hd/install-office2013.bat || { echo "Error coping install-office2013.bat"; exit 1; }
+fi
+
+if [ $INSTALL_OFFICE_2016 = true ]; then
+  cp $IMAGEPATH/setup/install-office2016.bat /mnt/hd/install-office2016.bat || { echo "Error coping install-office2016.bat"; exit 1; }
+fi
+
+if [ $DELETE_LIBREOFFICE_DICTS = true ]; then
+  cp $IMAGEPATH/setup/delete-libreoffice-dicts.bat /mnt/hd/delete-libreoffice-dicts.bat || { echo "Error coping delete-libreoffice-dicts.bat"; exit 1; }
+fi
+
+echo "SET install_apps=$INSTALL_APPS" > /mnt/hd/just-install.bat || { echo "Error creating just-install.bat"; exit 1; }
+cat $IMAGEPATH/setup/just-install.bat >> /mnt/hd/just-install.bat || { echo "Error coping just-install.bat"; exit 1; }
+
+umount_win
