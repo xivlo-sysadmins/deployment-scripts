@@ -23,6 +23,14 @@ create_efi() {
 	umount_efi
 }
 
+get_pycharm_ce_download_url() {
+	curl https://data.services.jetbrains.com/products/releases?code=PCC\&latest=true | jq -r '.PCC[].downloads.linux.link'
+}
+
+get_pycharm_ce_version() {
+	curl https://data.services.jetbrains.com/products/releases?code=PCC\&latest=true | jq -r '.PCC[].version'
+}
+
 # Sets default block devices if they are not set
 set_block_devices() {
 	if [ -z $DISK ]; then
