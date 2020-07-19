@@ -25,6 +25,7 @@ echo @reboot\ root\ /usr/local/bin/config-mariadb-server-matura.sh\ \&\&\ rm\ /u
 chmod a+x /mnt/hd/etc/cron.d/config-mariadb-server-matura
 
 curl -L $(get_pycharm_ce_download_url) | tar zx -C /mnt/hd/opt/
-cp setup/jetbrains-pycharm-ce.desktop /mnt/hd/usr/share/applications/
+cp setup/jetbrains-pycharm-ce.desktop /mnt/hd/usr/share/applications/jetbrains-pycharm-ce.desktop
+sed -i -e 's/VERSION/'$(get_pycharm_ce_version)'/' /mnt/hd/usr/share/applications/jetbrains-pycharm-ce.desktop
 
 umount /mnt/hd
