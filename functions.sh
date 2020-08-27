@@ -152,6 +152,9 @@ recreate_windows_efi() {
 
 	mkdir -p /mnt/efi/EFI/Microsoft/Boot/
 	cp -r /mnt/hd/Windows/Boot/EFI/. /mnt/efi/EFI/Microsoft/Boot/
+	mkdir -p /mnt/efi/EFI/boot/
+	cp /mnt/efi/EFI/Microsoft/Boot/bootmgfw.efi /mnt/efi/EFI/boot/bootx64.efi
+
 	if [ -f $IMAGEPATH/komputery/$BASECOMP/BCD ]; then
 		BCD_FILE=$IMAGEPATH/komputery/$BASECOMP/BCD
 	else
