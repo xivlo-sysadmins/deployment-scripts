@@ -52,6 +52,15 @@ set_block_devices() {
 	fi
 }
 
+# Removes all file entries from efibootmgr
+wipe_efibootmgr_entries() {
+	if [ -d "/sys/firmware/efi/" ]; then
+		for bootnum in $(efibootmgr -v | grep \/File\(.*\.efi\) | cut -d ' ' -f 1 | sed -e 's/Boot//' -e 's/\*//'); do
+			efibootmgr -b $bootnum -B
+		done
+	fi
+}
+
 mount_efi() {
 	mount $EFI_DEVICE /mnt/efi || { echo "ERROR: mount $DEVICE failed"; exit 5; }
 	cat /proc/mounts > /etc/mtab
